@@ -21,7 +21,7 @@ class TransactionOverview extends BaseWidget
     {
         return ManageTransactions::class;
     }
-    
+
     protected function getHeading(): ?string
     {
         return 'Ringkasan Transaksi';
@@ -35,20 +35,29 @@ class TransactionOverview extends BaseWidget
 
     protected function getStats(): array
     {
-        // $query = $this->getPageTableQuery();
-        $query = Transaction::where('user_id', Auth::user()->id);
+        $query = $this->getPageTableQuery();
+        $queryData = Transaction::where('user_id', Auth::user()->id);
         $accounts = Account::where('user_id', Auth::id())->where('exclude_from_total', false)->get();
         $transactions = $query->where('user_id', Auth::id())
-                                    ->whereHas('account', function ($query) {
-                                        $query->where('exclude_from_total', false);
-                                    })
-                                    ->get();
+            ->whereHas('account', function ($query) {
+                $query->where('exclude_from_total', false);
+            })
+            ->get();
 
-        $totalAccountBalance = $accounts->sum('starting_balance');
+        $transactionsData = $queryData->where('user_id', Auth::id())
+            ->whereHas('account', function ($query) {
+                $query->where('exclude_from_total', false);
+            })
+            ->get();
+
         $totalIn = $transactions->where('tipe_transaksi', 'Pemasukan')->sum('amount');
         $totalEx = $transactions->where('tipe_transaksi', 'Pengeluaran')->sum('amount');
-        
-        $totalBalance = $totalAccountBalance + ($totalIn + $totalEx);
+        // Hitung total saldo awal dari semua akun yang tidak dikecualikan
+        $totalAccountBalance = $accounts->sum('starting_balance');
+        $totalInData = $transactionsData->where('tipe_transaksi', 'Pemasukan')->sum('amount');
+        $totalExData = $transactionsData->where('tipe_transaksi', 'Pengeluaran')->sum('amount');
+
+        $totalBalance = $totalAccountBalance + ($totalInData + $totalExData);
         return [
             Stat::make('Total Balance', 'Rp ' . number_format($totalBalance, 2, ',', '.'))
                 // ->description($this->getDesc($totalIncome))
@@ -60,7 +69,10 @@ class TransactionOverview extends BaseWidget
                     'class' => 'shadow-lg',
                 ]),
 
-            Stat::make('Total Expense', 'Rp ' . number_format($totalEx, 2, ',', '.'))
+            Stat::make(
+                'Total Expense',
+                ($totalEx < 0 ? '-Rp ' . number_format(abs($totalEx), 0, ',', '.') : 'Rp ' . number_format($totalEx, 0, ',', '.'))
+            )
                 ->description('Arus Keluar')
                 ->descriptionIcon('heroicon-m-arrow-trending-down')
                 ->color('danger')
@@ -68,6 +80,7 @@ class TransactionOverview extends BaseWidget
                 ->extraAttributes([
                     'class' => 'shadow-lg',
                 ]),
+
 
             Stat::make('Total Income', 'Rp ' . number_format($totalIn, 2, ',', '.'))
                 ->description('Arus Masuk')
@@ -136,5 +149,4 @@ class TransactionOverview extends BaseWidget
             return 'heroicon-m-arrow-trending-down';
         }
     }
-
 }

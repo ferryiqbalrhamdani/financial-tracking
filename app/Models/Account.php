@@ -11,6 +11,7 @@ class Account extends Model
         'name',
         'starting_balance',
         'exclude_from_total',
+        'sort',
     ];
 
     protected $casts = [
@@ -22,7 +23,7 @@ class Account extends Model
         return $this->belongsTo(User::class);
     }
 
-    
+
     public function transactions()
     {
         return $this->hasMany(Transaction::class);

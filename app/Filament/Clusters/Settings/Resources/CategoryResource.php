@@ -24,6 +24,8 @@ class CategoryResource extends Resource
 
     protected static ?string $cluster = Settings::class;
 
+    protected static ?int $navigationSort = 52;
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->where('user_id', Auth::id());
@@ -41,7 +43,7 @@ class CategoryResource extends Resource
                     ])
                     ->required(),
                 Forms\Components\TextInput::make('name')
-                ->required(),
+                    ->required(),
             ]);
     }
 
@@ -51,13 +53,13 @@ class CategoryResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('tipe_transaksi')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'Simpanan' => 'info',
                         'Pemasukan' => 'success',
                         'Pengeluaran' => 'danger',
                         default => 'gray',
                     })
-                    ->icon(fn (string $state): string => match ($state) {
+                    ->icon(fn(string $state): string => match ($state) {
                         'Simpanan' => 'heroicon-o-wallet',
                         'Pemasukan' => 'heroicon-o-arrow-up-circle',
                         'Pengeluaran' => 'heroicon-o-arrow-down-circle',
@@ -87,7 +89,10 @@ class CategoryResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->checkIfRecordIsSelectableUsing(
+                fn($record) => $record->name != 'Transfer keluar' && $record->name != 'Transfer masuk',
+            );
     }
 
     public static function getRelations(): array

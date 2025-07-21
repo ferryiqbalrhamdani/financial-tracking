@@ -29,7 +29,7 @@ class MoneyManagerPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->brandName('Financial Tracking')
             ->spa()
-            ->registration()
+            // ->registration()
             ->login()
             ->colors([
                 'primary' => Color::Amber,
@@ -55,9 +55,14 @@ class MoneyManagerPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                \Hasnayeen\Themes\Http\Middleware\SetTheme::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
+            ])
+            ->plugins([
+                // \TomatoPHP\FilamentPWA\FilamentPWAPlugin::make(),
+                \Hasnayeen\Themes\ThemesPlugin::make(),
             ]);
     }
 }

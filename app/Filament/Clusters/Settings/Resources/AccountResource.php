@@ -30,7 +30,8 @@ class AccountResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = Settings::class;
-    
+    protected static ?int $navigationSort = 51;
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->where('user_id', Auth::id());
@@ -58,6 +59,7 @@ class AccountResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->reorderable('sort')
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
@@ -69,24 +71,24 @@ class AccountResource extends Resource
                     ->label('Tidak termasuk total')
                     ->alignment(Alignment::Center)
                     ->boolean(),
-                    Tables\Columns\TextColumn::make('saldo_akhir')
+                Tables\Columns\TextColumn::make('saldo_akhir')
                     ->label('Saldo Akhir')
                     ->money('IDR', locale: 'id')
                     ->sortable()
                     ->alignment(Alignment::Right)
                     ->getStateUsing(function ($record) {
                         $startingBalance = $record->starting_balance;
-                
+
                         $pemasukan = $record->transactions
                             ->where('tipe_transaksi', 'Pemasukan')
                             ->sum('amount');
-                
+
                         $pengeluaran = $record->transactions
                             ->where('tipe_transaksi', 'Pengeluaran')
                             ->sum('amount');
-                
+
                         $saldoAkhir = $startingBalance + ($pemasukan + $pengeluaran);
-                
+
                         return $saldoAkhir;
                     }),
                 Tables\Columns\TextColumn::make('created_at')
@@ -102,7 +104,7 @@ class AccountResource extends Resource
             ->filters([
                 DateRangeFilter::make('created_at')
             ])
-            ->defaultSort('exclude_from_total', 'asc')
+            ->defaultSort('sort', 'asc')
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
@@ -114,12 +116,12 @@ class AccountResource extends Resource
             ->groups([
                 Group::make('exclude_from_total')
                     ->getDescriptionFromRecordUsing(function ($record) {
-                            if($record->exclude_from_total == false) {
-                                return 'Masukkan dalam total';
-                            } else {
-                                return 'Kecualikan dari total';
-                            }
-                        }),
+                        if ($record->exclude_from_total == false) {
+                            return 'Masukkan dalam total';
+                        } else {
+                            return 'Kecualikan dari total';
+                        }
+                    }),
             ]);
     }
 
