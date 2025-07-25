@@ -15,6 +15,9 @@ class Transaction extends Model
         'description',
         'date',
         'is_transfer',
+        'debt_id',
+        'bill_id',
+        'subscription_id',
     ];
 
     public function user()
@@ -30,5 +33,18 @@ class Transaction extends Model
     public function account()
     {
         return $this->belongsTo(Account::class);
+    }
+
+    public function debt()
+    {
+        return $this->belongsTo(Debt::class);
+    }
+    public function bill()
+    {
+        return $this->belongsTo(Bill::class);
+    }
+    public function subscription()
+    {
+        return $this->belongsTo(Subscription::class);
     }
 }
