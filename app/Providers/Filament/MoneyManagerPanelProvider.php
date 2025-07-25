@@ -42,8 +42,8 @@ class MoneyManagerPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                // Widgets\AccountWidget::class,
+                // Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -60,8 +60,10 @@ class MoneyManagerPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
+            ->databaseNotifications()
             ->plugins([
                 // \TomatoPHP\FilamentPWA\FilamentPWAPlugin::make(),
+                // \TomatoPHP\FilamentNotes\FilamentNotesPlugin::make(),
                 \Hasnayeen\Themes\ThemesPlugin::make(),
             ]);
     }

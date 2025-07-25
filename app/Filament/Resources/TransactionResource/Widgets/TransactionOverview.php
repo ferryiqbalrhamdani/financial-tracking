@@ -5,6 +5,7 @@ namespace App\Filament\Resources\TransactionResource\Widgets;
 use Carbon\Carbon;
 use App\Models\Account;
 use App\Models\Transaction;
+use App\Models\Localization;
 use Illuminate\Support\Facades\Auth;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Filament\Widgets\Concerns\InteractsWithPageTable;
@@ -35,9 +36,12 @@ class TransactionOverview extends BaseWidget
 
     protected function getStats(): array
     {
+        $currencySymbol = Localization::getCurrencySymbol();
+
         $query = $this->getPageTableQuery();
         $queryData = Transaction::where('user_id', Auth::user()->id);
         $accounts = Account::where('user_id', Auth::id())->where('exclude_from_total', false)->get();
+
         $transactions = $query->where('user_id', Auth::id())
             ->whereHas('account', function ($query) {
                 $query->where('exclude_from_total', false);
@@ -52,17 +56,14 @@ class TransactionOverview extends BaseWidget
 
         $totalIn = $transactions->where('tipe_transaksi', 'Pemasukan')->sum('amount');
         $totalEx = $transactions->where('tipe_transaksi', 'Pengeluaran')->sum('amount');
-        // Hitung total saldo awal dari semua akun yang tidak dikecualikan
         $totalAccountBalance = $accounts->sum('starting_balance');
         $totalInData = $transactionsData->where('tipe_transaksi', 'Pemasukan')->sum('amount');
         $totalExData = $transactionsData->where('tipe_transaksi', 'Pengeluaran')->sum('amount');
-
         $totalBalance = $totalAccountBalance + ($totalInData + $totalExData);
+
         return [
-            Stat::make('Total Balance', 'Rp ' . number_format($totalBalance, 2, ',', '.'))
-                // ->description($this->getDesc($totalIncome))
-                // ->descriptionIcon($this->getDescriptionIcon($totalIncome))
-                ->chart($this->getMonthlyBalanceChart()) // <- DIUBAH DI SINI
+            Stat::make('Total Balance', $currencySymbol . ' ' . number_format($totalBalance, 2, ',', '.'))
+                ->chart($this->getMonthlyBalanceChart())
                 ->color('success')
                 ->icon('heroicon-o-wallet')
                 ->extraAttributes([
@@ -71,7 +72,10 @@ class TransactionOverview extends BaseWidget
 
             Stat::make(
                 'Total Expense',
-                ($totalEx < 0 ? '-Rp ' . number_format(abs($totalEx), 0, ',', '.') : 'Rp ' . number_format($totalEx, 0, ',', '.'))
+                ($totalEx < 0
+                    ? '-' . $currencySymbol . ' ' . number_format(abs($totalEx), 2, ',', '.')
+                    : $currencySymbol . ' ' . number_format($totalEx, 2, ',', '.')
+                )
             )
                 ->description('Arus Keluar')
                 ->descriptionIcon('heroicon-m-arrow-trending-down')
@@ -81,8 +85,7 @@ class TransactionOverview extends BaseWidget
                     'class' => 'shadow-lg',
                 ]),
 
-
-            Stat::make('Total Income', 'Rp ' . number_format($totalIn, 2, ',', '.'))
+            Stat::make('Total Income', $currencySymbol . ' ' . number_format($totalIn, 2, ',', '.'))
                 ->description('Arus Masuk')
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color('success')

@@ -82,7 +82,7 @@ class ManageTransactions extends ManageRecords
                             ->relationship(
                                 name: 'account',
                                 titleAttribute: 'name',
-                                modifyQueryUsing: fn($query) => $query->where('user_id', Auth::id())
+                                modifyQueryUsing: fn($query) => $query->where('user_id', Auth::id())->orderBy('sort')
                             )
                             ->searchable()
                             ->preload()
@@ -113,7 +113,7 @@ class ManageTransactions extends ManageRecords
                                 name: 'account',
                                 titleAttribute: 'name',
                                 modifyQueryUsing: function ($query, Get $get) {
-                                    $query->where('user_id', Auth::id());
+                                    $query->where('user_id', Auth::id())->orderBy('sort');
 
                                     // Filter agar tidak bisa memilih akun yang sama dengan pengirim
                                     if ($get('account_id_send')) {
@@ -133,7 +133,6 @@ class ManageTransactions extends ManageRecords
                         ->stripCharacters(',')
                         ->prefix('Rp ')
                         ->numeric()
-                        ->default(0)
                         ->columnSpanFull()
                         ->required(),
 
@@ -236,20 +235,24 @@ class ManageTransactions extends ManageRecords
 
                     return $data;
                 })
+                ->icon('heroicon-o-plus')
         ];
     }
 
     public function getTabs(): array
     {
         return [
-            'semua data' => Tab::make()
+            'semua' => Tab::make()
                 // ->badge(count(Transaction::where('user_id', Auth::user()->id)->get()))
+                ->icon('heroicon-o-rectangle-stack')
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('user_id', Auth::user()->id)),
             'Pengeluaran' => Tab::make()
                 // ->badge(count(Transaction::where('user_id', Auth::user()->id)->where('tipe_transaksi', 'Pengeluaran')->get()))
+                ->icon('heroicon-o-arrow-down-circle')
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('user_id', Auth::user()->id)->where('tipe_transaksi', 'Pengeluaran')),
             'Pemasukan' => Tab::make()
                 // ->badge(count(Transaction::where('user_id', Auth::user()->id)->where('tipe_transaksi', 'Pemasukan')->get()))
+                ->icon('heroicon-o-arrow-up-circle')
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('user_id', Auth::user()->id)->where('tipe_transaksi', 'Pemasukan')),
         ];
     }

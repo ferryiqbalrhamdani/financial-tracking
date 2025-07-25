@@ -27,10 +27,11 @@ class AccountResource extends Resource
 {
     protected static ?string $model = Account::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    // protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $cluster = Settings::class;
     protected static ?int $navigationSort = 51;
+
 
     public static function getEloquentQuery(): Builder
     {
@@ -74,17 +75,16 @@ class AccountResource extends Resource
                 Tables\Columns\TextColumn::make('saldo_akhir')
                     ->label('Saldo Akhir')
                     ->money('IDR', locale: 'id')
-                    ->sortable()
                     ->alignment(Alignment::Right)
                     ->getStateUsing(function ($record) {
                         $startingBalance = $record->starting_balance;
 
                         $pemasukan = $record->transactions
-                            ->where('tipe_transaksi', 'Pemasukan')
+                            ->where('tipe_Akun', 'Pemasukan')
                             ->sum('amount');
 
                         $pengeluaran = $record->transactions
-                            ->where('tipe_transaksi', 'Pengeluaran')
+                            ->where('tipe_Akun', 'Pengeluaran')
                             ->sum('amount');
 
                         $saldoAkhir = $startingBalance + ($pemasukan + $pengeluaran);
@@ -106,7 +106,11 @@ class AccountResource extends Resource
             ])
             ->defaultSort('sort', 'asc')
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                ])
+                    ->tooltip('Aksi'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -144,8 +148,28 @@ class AccountResource extends Resource
     public static function getWidgets(): array
     {
         return [
-            AccountsTotalOverview::class,
+            // AccountsTotalOverview::class,
             AccountsOverview::class,
         ];
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return 'Akun';
+    }
+
+    public static function getModelLabel(): string
+    {
+        return 'Akun';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Akun';
+    }
+
+    public function getTitle(): string
+    {
+        return 'Akun';
     }
 }

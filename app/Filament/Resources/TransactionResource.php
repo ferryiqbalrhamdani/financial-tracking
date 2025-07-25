@@ -11,6 +11,8 @@ use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Models\Transaction;
 use Filament\Support\RawJs;
+use App\Models\Localization;
+use App\Enums\Settings\DayStart;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\Facades\Auth;
@@ -32,6 +34,7 @@ class TransactionResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->where('user_id', Auth::id());
@@ -47,6 +50,10 @@ class TransactionResource extends Resource
                     ->options([
                         'Pengeluaran' => 'Pengeluaran',
                         'Pemasukan' => 'Pemasukan',
+                    ])
+                    ->icons([
+                        'Pengeluaran' => 'heroicon-o-arrow-down-circle',
+                        'Pemasukan' => 'heroicon-o-arrow-up-circle',
                     ])
                     ->default('Pengeluaran')
                     ->required()
@@ -92,7 +99,7 @@ class TransactionResource extends Resource
                     ->relationship(
                         name: 'account',
                         titleAttribute: 'name',
-                        modifyQueryUsing: fn($query) => $query->where('user_id', Auth::id())
+                        modifyQueryUsing: fn($query) => $query->where('user_id', Auth::id())->orderBy('sort')
                     )
                     ->reactive()
                     ->searchable()
@@ -120,7 +127,6 @@ class TransactionResource extends Resource
                     ->stripCharacters(',')
                     ->prefix('Rp ')
                     ->numeric()
-                    ->default(0)
                     ->columnSpanFull()
                     ->required()
                     ->dehydrateStateUsing(function ($state, callable $get) {
@@ -138,10 +144,28 @@ class TransactionResource extends Resource
 
     public static function table(Table $table): Table
     {
+
+        $dayStart = Localization::where('user_id', Auth::id())->value('monthly_period_start_day') ?? 1;
+
+        $today = Carbon::today();
+
+        $currency = Localization::where('user_id', Auth::id())->value('currency') ?? 'IDR';
+
+        if ($today->day >= $dayStart) {
+            // Sudah lewat tanggal start → ambil bulan ini sampai tanggal start bulan depan - 1
+            $startDate = Carbon::create($today->year, $today->month, $dayStart);
+            $endDate = $startDate->copy()->addMonth()->subDay();
+        } else {
+            // Belum sampai tanggal start → ambil tanggal start bulan lalu sampai kemarin tanggal start - 1
+            $startDate = Carbon::create($today->year, $today->month, $dayStart)->subMonth();
+            $endDate = $startDate->copy()->addMonth()->subDay();
+        }
+
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Kategori')
+                    ->searchable()
                     ->sortable()
                     ->description(fn($record): string => $record->description ?? 'Tidak ada deskripsi'),
                 Tables\Columns\TextColumn::make('account.name')
@@ -162,8 +186,7 @@ class TransactionResource extends Resource
                         'Simpanan' => 'heroicon-o-wallet',
                         'Pemasukan' => 'heroicon-o-arrow-up-circle',
                         'Pengeluaran' => 'heroicon-o-arrow-down-circle',
-                    })
-                    ->searchable(),
+                    }),
                 Tables\Columns\TextColumn::make('date')
                     ->label('Tanggal Transaksi')
                     ->date()
@@ -182,11 +205,11 @@ class TransactionResource extends Resource
                         }
                     })
                     ->alignment(Alignment::Right)
-                    ->money('IDR', locale: 'id')
+                    ->money($currency)
                     ->summarize(
                         Sum::make()
                             ->label('')
-                            ->money('IDR', locale: 'id')
+                            ->money('IDR')
                     ),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -200,7 +223,10 @@ class TransactionResource extends Resource
             ->filters([
                 DateRangeFilter::make('date')
                     ->label('Tanggal Transaksi')
-                    ->defaultThisMonth(),
+                    ->defaultCustom(
+                        $startDate,
+                        $endDate
+                    ),
                 Tables\Filters\Filter::make('akun')
                     ->form([
                         Forms\Components\Select::make('akun')
@@ -262,6 +288,7 @@ class TransactionResource extends Resource
 
 
             ], layout: FiltersLayout::AboveContent)
+            ->deferLoading()
             ->filtersFormColumns(3)
             ->filtersFormWidth(MaxWidth::FourExtraLarge)
             ->defaultSort('date', 'desc')

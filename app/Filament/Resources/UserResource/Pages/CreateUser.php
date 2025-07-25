@@ -7,6 +7,7 @@ use Filament\Actions;
 use App\Models\Account;
 use App\Models\Category;
 use App\Filament\Resources\UserResource;
+use App\Models\Localization;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateUser extends CreateRecord
@@ -87,6 +88,10 @@ class CreateUser extends CreateRecord
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ],
+        ]);
+
+        Localization::create([
+            'user_id' => $this->record['id'],
         ]);
     }
 }

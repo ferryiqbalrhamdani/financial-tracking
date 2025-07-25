@@ -82,10 +82,10 @@
     @endphp
 
     <div x-data="{
-                showSaldo: localStorage.getItem('showSaldo_{{ $record->id }}') === 'true',
+                showSaldo: localStorage.getItem('view_showSaldo_{{ $record->id }}') === 'true',
                 toggleSaldo() {
                     this.showSaldo = !this.showSaldo;
-                    localStorage.setItem('showSaldo_{{ $record->id }}', this.showSaldo);
+                    localStorage.setItem('view_showSaldo_{{ $record->id }}', this.showSaldo);
                 }
             }"
         class="bg-white dark:bg-gray-900 rounded-xl p-6 border border-gray-200 dark:border-gray-700 shadow-lg hover:shadow-xl transition-shadow">
