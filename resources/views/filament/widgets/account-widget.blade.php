@@ -22,17 +22,17 @@
             isDragging: false,
             startX: 0,
             scrollLeft: 0,
-            
+
             scrollLeftBtn() {
                 this.scrollContainer.scrollBy({ left: -300, behavior: 'smooth' });
             },
             scrollRightBtn() {
                 this.scrollContainer.scrollBy({ left: 300, behavior: 'smooth' });
             },
-            
+
             init() {
                 this.scrollContainer = this.$refs.cardContainer;
-                
+
                 // Mouse drag scroll
                 this.scrollContainer.addEventListener('mousedown', (e) => {
                     this.isDragging = true;
@@ -40,12 +40,12 @@
                     this.scrollLeft = this.scrollContainer.scrollLeft;
                     this.scrollContainer.style.cursor = 'grabbing';
                 });
-                
+
                 document.addEventListener('mouseup', () => {
                     this.isDragging = false;
                     this.scrollContainer.style.cursor = 'grab';
                 });
-                
+
                 document.addEventListener('mousemove', (e) => {
                     if(!this.isDragging) return;
                     e.preventDefault();

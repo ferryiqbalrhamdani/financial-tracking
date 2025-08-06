@@ -1,19 +1,13 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Clusters\Settings\Resources\AccountResource\RelationManagers;
 
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Tables;
-use App\Models\Account;
-use App\Models\Category;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
-use App\Models\Transaction;
-use Filament\Support\RawJs;
 use App\Models\Localization;
-use App\Enums\Settings\DayStart;
-use Filament\Resources\Resource;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\Facades\Auth;
 use Filament\Support\Enums\Alignment;
@@ -21,128 +15,24 @@ use Filament\Tables\Enums\FiltersLayout;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\TransactionResource\Pages;
-use App\Filament\Resources\TransactionResource\RelationManagers;
+use Filament\Resources\RelationManagers\RelationManager;
 use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
-use App\Filament\Resources\TransactionResource\Widgets\TransactionOverview;
 
-class TransactionResource extends Resource
+class TransactionsRelationManager extends RelationManager
 {
-    protected static ?string $model = Transaction::class;
+    protected static string $relationship = 'transactions';
 
-    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
-
-    protected static ?int $navigationSort = 1;
-
-
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()->where('user_id', Auth::id());
-    }
-
-    public static function form(Form $form): Form
+    public function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\ToggleButtons::make('tipe_transaksi')
-                    ->inline()
-                    ->grouped()
-                    ->options([
-                        'Pengeluaran' => 'Pengeluaran',
-                        'Pemasukan' => 'Pemasukan',
-                    ])
-                    ->icons([
-                        'Pengeluaran' => 'heroicon-o-arrow-down-circle',
-                        'Pemasukan' => 'heroicon-o-arrow-up-circle',
-                    ])
-                    ->default('Pengeluaran')
+                Forms\Components\TextInput::make('tipe_transaksi')
                     ->required()
-                    ->colors([
-                        'Pengeluaran' => 'danger',
-                        'Pemasukan' => 'success',
-                    ])
-                    ->reactive(),
-
-                Forms\Components\Select::make('category_id')
-                    ->label('Kategori')
-                    ->required()
-                    ->options(function (callable $get) {
-                        $tipeTransaksi = $get('tipe_transaksi');
-                        return Category::query()
-                            ->where('tipe_transaksi', $tipeTransaksi)
-                            ->where('user_id', Auth::user()->id)
-                            ->pluck('name', 'id');
-                    })
-                    ->searchable()
-                    ->reactive()
-                    ->disabled(fn(callable $get) => empty($get('tipe_transaksi')))
-                    ->placeholder('Pilih kategori'),
-                Forms\Components\Select::make('account_id')
-                    ->label('Akun')
-                    ->helperText(function ($state) {
-                        if (!$state) return null;
-
-                        // Ambil akun beserta total pemasukan dan pengeluaran
-                        $account = Account::where('id', $state)
-                            ->withSum([
-                                'transactions as pemasukan' => fn($query) => $query->where('tipe_transaksi', 'Pemasukan'),
-                                'transactions as pengeluaran' => fn($query) => $query->where('tipe_transaksi', 'Pengeluaran'),
-                            ], 'amount')
-                            ->first();
-
-                        if (!$account) return null;
-
-                        $balance = $account->starting_balance + ($account->pemasukan ?? 0) + ($account->pengeluaran ?? 0);
-
-                        return 'Saldo: Rp ' . number_format($balance, 2, ',', '.');
-                    })
-                    ->relationship(
-                        name: 'account',
-                        titleAttribute: 'name',
-                        modifyQueryUsing: fn($query) => $query->where('user_id', Auth::id())->orderBy('sort')
-                    )
-                    ->reactive()
-                    ->searchable()
-                    ->preload()
-                    ->required()
-                    ->placeholder('Pilih akun'),
-                Forms\Components\DatePicker::make('date')
-                    ->label('Tanggal Transaksi')
-                    ->default(Carbon::now())
-                    ->native(false)
-                    ->required()
-                    ->closeOnDateSelection()
-                    ->reactive()
-                    // ->afterStateHydrated(function ($component, $state) {
-                    //     // Saat edit, pastikan hanya tanggal saja yang ditampilkan
-                    //     $component->state(Carbon::parse($state)->toDateString());
-                    // })
-                    ->dehydrateStateUsing(function ($state) {
-                        // Saat menyimpan, gabungkan tanggal dengan waktu sekarang
-                        return Carbon::parse($state);
-                    }),
-                Forms\Components\TextInput::make('amount')
-                    ->label('Jumlah')
-                    ->mask(RawJs::make('$money($input)'))
-                    ->stripCharacters(',')
-                    ->prefix('Rp ')
-                    ->numeric()
-                    ->columnSpanFull()
-                    ->required()
-                    ->dehydrateStateUsing(function ($state, callable $get) {
-                        $amount = floatval(str_replace(',', '', $state)); // Ubah string jadi angka
-                        return $get('tipe_transaksi') === 'Pengeluaran'
-                            ? -abs($amount)
-                            : abs($amount);
-                    }),
-                Forms\Components\Textarea::make('description')
-                    ->label('Deskripsi')
-                    ->columnSpanFull()
-                    ->rows(5),
+                    ->maxLength(255),
             ]);
     }
 
-    public static function table(Table $table): Table
+    public function table(Table $table): Table
     {
 
         $dayStart = Localization::where('user_id', Auth::id())->value('monthly_period_start_day') ?? 1;
@@ -160,8 +50,8 @@ class TransactionResource extends Resource
             $startDate = Carbon::create($today->year, $today->month, $dayStart)->subMonth();
             $endDate = $startDate->copy()->addMonth()->subDay();
         }
-
         return $table
+            ->recordTitleAttribute('tipe_transaksi')
             ->columns([
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Kategori')
@@ -292,18 +182,8 @@ class TransactionResource extends Resource
             ->filtersFormColumns(3)
             ->filtersFormWidth(MaxWidth::FourExtraLarge)
             ->defaultSort('date', 'desc')
-            ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
-                ])
-                    ->tooltip('Aksi'),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ])
+            ->actions([])
+            ->bulkActions([])
             ->groups([
                 Tables\Grouping\Group::make('date')
                     ->label('Tanggal Transaksi')
@@ -313,41 +193,6 @@ class TransactionResource extends Resource
                     ->date(),
             ])
             ->groupingSettingsHidden()
-            ->defaultGroup('date')
-        ;
-    }
-
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ManageTransactions::route('/'),
-        ];
-    }
-
-    public static function getWidgets(): array
-    {
-        return [
-            TransactionOverview::class,
-        ];
-    }
-
-    public static function getNavigationLabel(): string
-    {
-        return 'Transaksi';
-    }
-
-    public static function getModelLabel(): string
-    {
-        return 'Transaksi';
-    }
-
-    public static function getPluralModelLabel(): string
-    {
-        return 'Transaksi';
-    }
-
-    public function getTitle(): string
-    {
-        return 'Transaksi';
+            ->defaultGroup('date');
     }
 }

@@ -21,7 +21,7 @@ class CurrentMonthTransactionWidget extends BaseWidget
 {
     protected int | string | array $columnSpan = 'full';
 
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 3;
     public function table(Table $table): Table
     {
         $dayStart = Localization::where('user_id', Auth::id())->value('monthly_period_start_day') ?? 1;
@@ -52,7 +52,10 @@ class CurrentMonthTransactionWidget extends BaseWidget
             ->query(
                 TransactionResource::getEloquentQuery()
                     ->where('user_id', Auth::user()->id)
-                    ->whereBetween('date', [$startDate, $endDate])
+                    ->whereBetween('date', [
+                        $startDate->startOfDay(),
+                        $endDate->endOfDay()
+                    ])
                     ->where('is_transfer', false)
                     ->orderBy('date', 'desc')
 
@@ -105,7 +108,7 @@ class CurrentMonthTransactionWidget extends BaseWidget
             ])
             ->deferLoading()
             ->heading('Periode ' . $startDate->format('d M') . ' – ' . $endDate->format('d M'))
-            ->description('Transaksi anda dalam periode ini.')
+            ->description('Transaksi anda dalam periode ini, transfer tidak ditampilkan.')
             ->paginated(false)
             ->groups([
                 Tables\Grouping\Group::make('date')

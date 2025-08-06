@@ -46,8 +46,8 @@ class Budget extends Page implements HasTable
         $today = Carbon::today();
 
         if ($today->day >= $dayStart) {
-            $startDate = Carbon::create($today->year, $today->month, $dayStart);
-            $endDate = $startDate->copy()->addMonth()->subDay();
+            $startDate = Carbon::create($today->year, $today->month, $dayStart)->startOfDay();
+            $endDate = $startDate->copy()->addMonth()->subDay()->endOfDay();
         } else {
             $startDate = Carbon::create($today->year, $today->month, $dayStart)->subMonth();
             $endDate = $startDate->copy()->addMonth()->subDay();
@@ -60,6 +60,7 @@ class Budget extends Page implements HasTable
             ->heading('Periode ' . $startDate->format('d M') . ' – ' . $endDate->format('d M'))
             ->description('Anggaran anda dalam periode ini.')
             ->paginated(false)
+            ->deferLoading()
             ->emptyStateHeading('Belum ada budget yang dibuat')
             ->emptyStateActions([
                 Action::make('create')
@@ -77,7 +78,10 @@ class Budget extends Page implements HasTable
                         $totalExpense = abs(
                             $record->category
                                 ?->transactions()
-                                ->whereBetween('date', [$startDate, $endDate])
+                                ->whereBetween('date', [
+                                    $startDate->startOfDay(),
+                                    $endDate->endOfDay()
+                                ])
                                 ->sum('amount') ?? 0
                         );
 
@@ -90,6 +94,7 @@ class Budget extends Page implements HasTable
                             'percentage' => $percentage,
                         ];
                     })
+
                     ->label('Persentase Anggaran')
                     ->alignment(Alignment::Center),
                 TextColumn::make('amount')
@@ -109,19 +114,25 @@ class Budget extends Page implements HasTable
                     ->getStateUsing(
                         fn($record): float =>
                         $record->category
-                            ->transactions
-                            ->whereBetween('date', [$startDate, $endDate])
+                            ->transactions()
+                            ->whereBetween('date', [
+                                $startDate->startOfDay(),
+                                $endDate->endOfDay()
+                            ])
                             ->sum('amount') ?? 0
                     )
-                    ->summarize([
-                        Sum::make()
-                            ->label('Total Pengeluaran')
-                            ->money('IDR', locale: 'id'),
-                    ])
+                    // ->summarize([
+                    //     Sum::make()
+                    //         ->label('Total Pengeluaran')
+                    //         ->money('IDR', locale: 'id'),
+                    // ])
                     ->description(fn($record) => 'Sisa: Rp ' . number_format(
                         $record->amount + $record->category
-                            ->transactions
-                            ->whereBetween('date', [$startDate, $endDate])
+                            ->transactions()
+                            ->whereBetween('date', [
+                                $startDate->startOfDay(),
+                                $endDate->endOfDay()
+                            ])
                             ->sum('amount') ?? 0,
                         2,
                         ',',
