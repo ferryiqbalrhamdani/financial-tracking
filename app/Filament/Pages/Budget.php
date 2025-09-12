@@ -142,4 +142,14 @@ class Budget extends Page implements HasTable
 
             ]);
     }
+
+    public function getTitle(): string
+    {
+        return 'Anggaran';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return 'Anggaran';
+    }
 }

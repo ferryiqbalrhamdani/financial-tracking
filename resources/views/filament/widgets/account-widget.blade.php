@@ -56,6 +56,25 @@
             }
         }" x-init="init()" class="relative w-full">
 
+        <!-- Tombol geser kiri-kanan -->
+        <div class="flex items-center justify-between w-full mb-4">
+            <button @click="scrollLeftBtn()"
+                class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 shadow">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <p>Daftar Akun</p>
+            <button @click="scrollRightBtn()"
+                class="ml-3 p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 shadow">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+        </div>
+
         <!-- Kontainer Card -->
         <div x-ref="cardContainer" class="flex space-x-4 overflow-x-auto px-12 scrollbar-hide card-container">
             @foreach ($this->getAccounts() as $account)

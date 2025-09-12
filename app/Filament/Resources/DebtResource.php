@@ -75,10 +75,27 @@ class DebtResource extends Resource
                             ->prefix('Rp '),
                         Forms\Components\Select::make('account_id')
                             ->label('Akun')
-                            ->options(Account::all()->where('user_id', Auth::id())->pluck('name', 'id'))
+                            ->options(Account::where('user_id', Auth::id())
+                                ->orderBy('sort', 'asc')
+                                ->pluck('name', 'id'))
+                            ->helperText(function ($state) {
+                                if (!$state) return null;
+
+                                // Ambil akun beserta total pemasukan dan pengeluaran
+                                $account = Account::where('id', $state)
+                                    ->withSum([
+                                        'transactions as pemasukan' => fn($query) => $query->where('tipe_transaksi', 'Pemasukan'),
+                                        'transactions as pengeluaran' => fn($query) => $query->where('tipe_transaksi', 'Pengeluaran'),
+                                    ], 'amount')
+                                    ->first();
+
+                                if (!$account) return null;
+
+                                $balance = $account->starting_balance + ($account->pemasukan ?? 0) + ($account->pengeluaran ?? 0);
+
+                                return 'Saldo: Rp ' . number_format($balance, 2, ',', '.');
+                            })
                             ->reactive()
-                            ->searchable()
-                            ->preload()
                             ->required()
                             ->placeholder('Pilih akun'),
                         Forms\Components\DatePicker::make('start_date')
@@ -215,7 +232,27 @@ class DebtResource extends Resource
                                 ->prefix('Rp '),
                             Forms\Components\Select::make('accountId')
                                 ->label('Akun')
-                                ->options(Account::query()->pluck('name', 'id'))
+                                ->options(Account::where('user_id', Auth::id())
+                                    ->orderBy('sort', 'asc')
+                                    ->pluck('name', 'id'))
+                                ->helperText(function ($state) {
+                                    if (!$state) return null;
+
+                                    // Ambil akun beserta total pemasukan dan pengeluaran
+                                    $account = Account::where('id', $state)
+                                        ->withSum([
+                                            'transactions as pemasukan' => fn($query) => $query->where('tipe_transaksi', 'Pemasukan'),
+                                            'transactions as pengeluaran' => fn($query) => $query->where('tipe_transaksi', 'Pengeluaran'),
+                                        ], 'amount')
+                                        ->first();
+
+                                    if (!$account) return null;
+
+                                    $balance = $account->starting_balance + ($account->pemasukan ?? 0) + ($account->pengeluaran ?? 0);
+
+                                    return 'Saldo: Rp ' . number_format($balance, 2, ',', '.');
+                                })
+                                ->reactive()
                                 ->required(),
                             Forms\Components\DatePicker::make('date')
                                 ->label('Tanggal Transaksi')

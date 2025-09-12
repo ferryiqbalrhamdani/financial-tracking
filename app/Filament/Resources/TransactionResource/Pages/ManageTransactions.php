@@ -84,8 +84,7 @@ class ManageTransactions extends ManageRecords
                                 titleAttribute: 'name',
                                 modifyQueryUsing: fn($query) => $query->where('user_id', Auth::id())->orderBy('sort')
                             )
-                            ->searchable()
-                            ->preload()
+
                             ->required()
                             ->reactive()
                             ->placeholder('Pilih akun'),
@@ -122,8 +121,6 @@ class ManageTransactions extends ManageRecords
                                 }
                             )
                             ->reactive()
-                            ->searchable()
-                            ->preload()
                             ->required()
                             ->placeholder('Pilih akun'),
                     ]),

@@ -13,6 +13,7 @@ use App\Filament\Clusters\Settings;
 use Filament\Tables\Grouping\Group;
 use Illuminate\Support\Facades\Auth;
 use Filament\Support\Enums\Alignment;
+use Filament\Tables\Columns\Layout\Stack;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\Summarizers\Count;
@@ -62,55 +63,57 @@ class AccountResource extends Resource
         return $table
             ->reorderable('sort')
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
-                // Tables\Columns\TextColumn::make('starting_balance')
-                //     ->label('Saldo Awal')
-                //     ->money('IDR', locale: 'id')
-                //     ->sortable(),
-                Tables\Columns\IconColumn::make('exclude_from_total')
-                    ->label('Tidak termasuk total')
-                    ->alignment(Alignment::Center)
-                    ->boolean(),
-                Tables\Columns\TextColumn::make('saldo_akhir')
-                    ->label('Saldo Akhir')
-                    ->money('IDR', locale: 'id')
-                    ->alignment(Alignment::Right)
-                    ->getStateUsing(function ($record) {
-                        $startingBalance = $record->starting_balance;
+                Stack::make([
+                    Tables\Columns\TextColumn::make('name')
+                        ->searchable(),
+                    // Tables\Columns\TextColumn::make('starting_balance')
+                    //     ->label('Saldo Awal')
+                    //     ->money('IDR', locale: 'id')
+                    //     ->sortable(),
+                    Tables\Columns\TextColumn::make('saldo_akhir')
+                        ->label('Saldo Akhir')
+                        ->money('IDR', locale: 'id')
+                        ->getStateUsing(function ($record) {
+                            $startingBalance = $record->starting_balance;
 
-                        $pemasukan = $record->transactions
-                            ->where('tipe_Akun', 'Pemasukan')
-                            ->sum('amount');
+                            $pemasukan = $record->transactions
+                                ->where('tipe_Akun', 'Pemasukan')
+                                ->sum('amount');
 
-                        $pengeluaran = $record->transactions
-                            ->where('tipe_Akun', 'Pengeluaran')
-                            ->sum('amount');
+                            $pengeluaran = $record->transactions
+                                ->where('tipe_Akun', 'Pengeluaran')
+                                ->sum('amount');
 
-                        $saldoAkhir = $startingBalance + ($pemasukan + $pengeluaran);
+                            $saldoAkhir = $startingBalance + ($pemasukan + $pengeluaran);
 
-                        return $saldoAkhir;
-                    }),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat')
-                    ->date()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                            return $saldoAkhir;
+                        }),
+                    // Tables\Columns\IconColumn::make('exclude_from_total')
+                    //     ->label('Tidak termasuk total')
+                    //     ->boolean(),
+                    // Tables\Columns\TextColumn::make('created_at')
+                    //     ->label('Dibuat')
+                    //     ->date()
+                    //     ->sortable()
+                    //     ->toggleable(isToggledHiddenByDefault: true),
+                    // Tables\Columns\TextColumn::make('updated_at')
+                    //     ->dateTime()
+                    //     ->sortable()
+                    //     ->toggleable(isToggledHiddenByDefault: true),
+                ]),
+            ])
+            ->contentGrid([
+                'md' => 2,
+                'xl' => 3,
             ])
             ->filters([
                 DateRangeFilter::make('created_at')
             ])
             ->defaultSort('sort', 'asc')
             ->actions([
-                Tables\Actions\ActionGroup::make([
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
-                ])
-                    ->tooltip('Aksi'),
+                // Tables\Actions\EditAction::make(),
+                // Tables\Actions\DeleteAction::make(),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -126,7 +129,8 @@ class AccountResource extends Resource
                             return 'Kecualikan dari total';
                         }
                     }),
-            ]);
+            ])
+            ->defaultGroup('exclude_from_total');
     }
 
     public static function getRelations(): array

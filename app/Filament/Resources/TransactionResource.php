@@ -102,8 +102,6 @@ class TransactionResource extends Resource
                         modifyQueryUsing: fn($query) => $query->where('user_id', Auth::id())->orderBy('sort')
                     )
                     ->reactive()
-                    ->searchable()
-                    ->preload()
                     ->required()
                     ->placeholder('Pilih akun'),
                 Forms\Components\DatePicker::make('date')

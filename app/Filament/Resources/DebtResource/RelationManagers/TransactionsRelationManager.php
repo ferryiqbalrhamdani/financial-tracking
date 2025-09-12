@@ -8,6 +8,7 @@ use App\Models\Account;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Support\RawJs;
+use Illuminate\Support\Facades\Auth;
 use Filament\Support\Enums\Alignment;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Columns\Summarizers\Sum;
@@ -33,7 +34,27 @@ class TransactionsRelationManager extends RelationManager
                             ->prefix('Rp '),
                         Forms\Components\Select::make('accountId')
                             ->label('Akun')
-                            ->options(Account::query()->pluck('name', 'id'))
+                            ->options(Account::where('user_id', Auth::id())
+                                ->orderBy('sort', 'asc')
+                                ->pluck('name', 'id'))
+                            ->helperText(function ($state) {
+                                if (!$state) return null;
+
+                                // Ambil akun beserta total pemasukan dan pengeluaran
+                                $account = Account::where('id', $state)
+                                    ->withSum([
+                                        'transactions as pemasukan' => fn($query) => $query->where('tipe_transaksi', 'Pemasukan'),
+                                        'transactions as pengeluaran' => fn($query) => $query->where('tipe_transaksi', 'Pengeluaran'),
+                                    ], 'amount')
+                                    ->first();
+
+                                if (!$account) return null;
+
+                                $balance = $account->starting_balance + ($account->pemasukan ?? 0) + ($account->pengeluaran ?? 0);
+
+                                return 'Saldo: Rp ' . number_format($balance, 2, ',', '.');
+                            })
+                            ->reactive()
                             ->required(),
                         Forms\Components\DatePicker::make('date')
                             ->label('Tanggal Transaksi')
