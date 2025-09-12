@@ -170,25 +170,25 @@ class TransactionResource extends Resource
                     ->label('Akun')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('tipe_transaksi')
-                    ->label('Tipe Transaksi')
-                    ->badge()
-                    ->alignment(Alignment::Center)
-                    ->color(fn(string $state): string => match ($state) {
-                        'Simpanan' => 'info',
-                        'Pemasukan' => 'success',
-                        'Pengeluaran' => 'danger',
-                        default => 'gray',
-                    })
-                    ->icon(fn(string $state): string => match ($state) {
-                        'Simpanan' => 'heroicon-o-wallet',
-                        'Pemasukan' => 'heroicon-o-arrow-up-circle',
-                        'Pengeluaran' => 'heroicon-o-arrow-down-circle',
-                    }),
-                Tables\Columns\TextColumn::make('date')
-                    ->label('Tanggal Transaksi')
-                    ->date()
-                    ->sortable(),
+                // Tables\Columns\TextColumn::make('tipe_transaksi')
+                //     ->label('Tipe Transaksi')
+                //     ->badge()
+                //     ->alignment(Alignment::Center)
+                //     ->color(fn(string $state): string => match ($state) {
+                //         'Simpanan' => 'info',
+                //         'Pemasukan' => 'success',
+                //         'Pengeluaran' => 'danger',
+                //         default => 'gray',
+                //     })
+                //     ->icon(fn(string $state): string => match ($state) {
+                //         'Simpanan' => 'heroicon-o-wallet',
+                //         'Pemasukan' => 'heroicon-o-arrow-up-circle',
+                //         'Pengeluaran' => 'heroicon-o-arrow-down-circle',
+                //     }),
+                // Tables\Columns\TextColumn::make('date')
+                //     ->label('Tanggal Transaksi')
+                //     ->date()
+                //     ->sortable(),
                 Tables\Columns\TextColumn::make('amount')
                     ->label('Jumlah Transaksi')
                     ->numeric()
