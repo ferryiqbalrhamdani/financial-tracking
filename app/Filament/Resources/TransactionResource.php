@@ -168,7 +168,8 @@ class TransactionResource extends Resource
                     ->description(fn($record): string => $record->description ?? 'Tidak ada deskripsi'),
                 Tables\Columns\TextColumn::make('account.name')
                     ->label('Akun')
-                    ->numeric()
+                    ->alignment(Alignment::Center)
+                    ->badge()
                     ->sortable(),
                 // Tables\Columns\TextColumn::make('tipe_transaksi')
                 //     ->label('Tipe Transaksi')
