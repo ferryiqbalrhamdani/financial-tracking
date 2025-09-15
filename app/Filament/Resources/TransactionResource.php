@@ -166,11 +166,11 @@ class TransactionResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->description(fn($record): string => $record->description ?? 'Tidak ada deskripsi'),
-                Tables\Columns\TextColumn::make('account.name')
-                    ->label('Akun')
-                    ->alignment(Alignment::Center)
-                    ->badge()
-                    ->sortable(),
+                // Tables\Columns\TextColumn::make('account.name')
+                //     ->label('Akun')
+                //     ->alignment(Alignment::Center)
+                //     ->badge()
+                //     ->sortable(),
                 // Tables\Columns\TextColumn::make('tipe_transaksi')
                 //     ->label('Tipe Transaksi')
                 //     ->badge()
@@ -203,6 +203,7 @@ class TransactionResource extends Resource
                             return 'gray';
                         }
                     })
+                    ->description(fn($record): string => $record->account->name ?? 'Tidak ada akun')
                     ->alignment(Alignment::Right)
                     ->money($currency)
                     ->summarize(
@@ -307,8 +308,12 @@ class TransactionResource extends Resource
                 Tables\Grouping\Group::make('date')
                     ->label('Tanggal Transaksi')
                     ->collapsible()
-                    ->orderQueryUsing(fn($query,) =>
-                    $query->orderBy("date", "desc"))
+                    ->orderQueryUsing(
+                        fn($query) =>
+                        $query
+                            ->orderBy('date', 'desc')      // urutkan group utama berdasarkan tanggal transaksi
+                            ->orderBy('created_at', 'desc') // dalam setiap group, urutkan berdasarkan waktu input
+                    )
                     ->date(),
             ])
             ->groupingSettingsHidden()

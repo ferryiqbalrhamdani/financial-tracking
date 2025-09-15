@@ -64,10 +64,10 @@ class CurrentMonthTransactionWidget extends BaseWidget
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Kategori')
                     ->description(fn($record): string => $record->description ?? 'Tidak ada deskripsi'),
-                Tables\Columns\TextColumn::make('account.name')
-                    ->label('Akun')
-                    ->alignment(Alignment::Center)
-                    ->badge(),
+                // Tables\Columns\TextColumn::make('account.name')
+                //     ->label('Akun')
+                //     ->alignment(Alignment::Center)
+                //     ->badge(),
                 // Tables\Columns\TextColumn::make('tipe_transaksi')
                 //     ->label('Tipe Transaksi')
                 //     ->badge()
@@ -98,6 +98,7 @@ class CurrentMonthTransactionWidget extends BaseWidget
                             return 'gray';
                         }
                     })
+                    ->description(fn($record): string => $record->account->name ?? 'Tidak ada akun')
                     ->alignment(Alignment::Right)
                     ->money($currency)
                     ->summarize(
