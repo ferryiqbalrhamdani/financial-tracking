@@ -41,11 +41,11 @@ class IncomeChart extends ChartWidget
 
         if ($activeFilter === 'today') {
             // per jam: 0..23
-            $rows = Transaction::selectRaw('HOUR(`date`) as period, SUM(amount) as total')
+            $rows = Transaction::selectRaw('EXTRACT(HOUR FROM "date") as period, SUM(amount) as total')
                 ->where('user_id', $userId)
                 ->where('tipe_transaksi', 'Pemasukan')
                 ->whereBetween('date', [$start, $end])
-                ->groupBy('period')
+                ->groupBy(DB::raw('EXTRACT(HOUR FROM "date")'))
                 ->pluck('total', 'period');
 
             for ($h = 0; $h <= 23; $h++) {
@@ -56,11 +56,11 @@ class IncomeChart extends ChartWidget
         } elseif ($activeFilter === 'week' || $activeFilter === 'month') {
             // per hari
             $period = CarbonPeriod::create($start->startOfDay(), $end->startOfDay());
-            $rows = Transaction::selectRaw('DATE(`date`) as period, SUM(amount) as total')
+            $rows = Transaction::selectRaw('CAST("date" AS DATE) as period, SUM(amount) as total')
                 ->where('user_id', $userId)
                 ->where('tipe_transaksi', 'Pemasukan')
                 ->whereBetween('date', [$start, $end])
-                ->groupBy(DB::raw('DATE(`date`)'))
+                ->groupBy(DB::raw('CAST("date" AS DATE)'))
                 ->pluck('total', 'period');
 
             foreach ($period as $day) {
@@ -71,11 +71,11 @@ class IncomeChart extends ChartWidget
             }
         } else { // year
             $year = $start->year;
-            $rows = Transaction::selectRaw('MONTH(`date`) as period, SUM(amount) as total')
+            $rows = Transaction::selectRaw('EXTRACT(MONTH FROM "date") as period, SUM(amount) as total')
                 ->where('user_id', $userId)
                 ->where('tipe_transaksi', 'Pemasukan')
                 ->whereYear('date', $year)
-                ->groupBy(DB::raw('MONTH(`date`)'))
+                ->groupBy(DB::raw('EXTRACT(MONTH FROM "date")'))
                 ->pluck('total', 'period');
 
             for ($m = 1; $m <= 12; $m++) {
