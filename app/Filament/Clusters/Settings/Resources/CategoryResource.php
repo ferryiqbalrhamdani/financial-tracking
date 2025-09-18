@@ -51,23 +51,24 @@ class CategoryResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('tipe_transaksi')
-                    ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'Simpanan' => 'info',
-                        'Pemasukan' => 'success',
-                        'Pengeluaran' => 'danger',
-                        default => 'gray',
-                    })
-                    ->icon(fn(string $state): string => match ($state) {
-                        'Simpanan' => 'heroicon-o-wallet',
-                        'Pemasukan' => 'heroicon-o-arrow-up-circle',
-                        'Pengeluaran' => 'heroicon-o-arrow-down-circle',
-                        default => 'heroicon-o-rectangle-stack',
-                    })
-                    ->sortable()
-                    ->searchable(),
+                // Tables\Columns\TextColumn::make('tipe_transaksi')
+                //     ->badge()
+                //     ->color(fn(string $state): string => match ($state) {
+                //         'Simpanan' => 'info',
+                //         'Pemasukan' => 'success',
+                //         'Pengeluaran' => 'danger',
+                //         default => 'gray',
+                //     })
+                //     ->icon(fn(string $state): string => match ($state) {
+                //         'Simpanan' => 'heroicon-o-wallet',
+                //         'Pemasukan' => 'heroicon-o-arrow-up-circle',
+                //         'Pengeluaran' => 'heroicon-o-arrow-down-circle',
+                //         default => 'heroicon-o-rectangle-stack',
+                //     })
+                //     ->sortable()
+                //     ->searchable(),
                 Tables\Columns\TextColumn::make('name')
+                ->label('Nama Kategori')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

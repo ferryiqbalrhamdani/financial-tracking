@@ -24,15 +24,15 @@ class ListCategories extends ListRecords
     public function getTabs(): array
     {
         return [
-            'semua data' => Tab::make()
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('user_id', Auth::user()->id))
-                ->badge(count(Category::where('user_id', Auth::user()->id)->get())),
+            // 'semua data' => Tab::make()
+            //     ->modifyQueryUsing(fn(Builder $query) => $query->where('user_id', Auth::user()->id))
+            //     ->badge(count(Category::where('user_id', Auth::user()->id)->get())),
+            'Pengeluaran' => Tab::make()
+            ->badge(count(Category::where('user_id', Auth::user()->id)->where('tipe_transaksi', 'Pengeluaran')->get()))
+            ->modifyQueryUsing(fn(Builder $query) => $query->where('user_id', Auth::user()->id)->where('tipe_transaksi', 'Pengeluaran')),
             'Pemasukan' => Tab::make()
                 ->badge(count(Category::where('user_id', Auth::user()->id)->where('tipe_transaksi', 'Pemasukan')->get()))
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('user_id', Auth::user()->id)->where('tipe_transaksi', 'Pemasukan')),
-            'Pengeluaran' => Tab::make()
-                ->badge(count(Category::where('user_id', Auth::user()->id)->where('tipe_transaksi', 'Pengeluaran')->get()))
-                ->modifyQueryUsing(fn(Builder $query) => $query->where('user_id', Auth::user()->id)->where('tipe_transaksi', 'Pengeluaran')),
         ];
     }
 }

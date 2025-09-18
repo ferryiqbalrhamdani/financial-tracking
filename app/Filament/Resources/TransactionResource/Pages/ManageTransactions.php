@@ -148,6 +148,8 @@ class ManageTransactions extends ManageRecords
 
                 ])
                 ->action(function (array $data) {
+                    $user = Auth::user();
+
                     // Bersihkan jumlah transfer (misal: dari "5.000.000" menjadi 5000000)
                     $amount = (int) str_replace(['.', ','], '', $data['amount']);
 
@@ -157,8 +159,13 @@ class ManageTransactions extends ManageRecords
                     $accountRecived = $accounts->find($data['account_id_recived']);
 
                     // Cek kategori
-                    $kategoriKeluar = Category::where('name', 'Transfer keluar')->first();
-                    $kategoriMasuk = Category::where('name', 'Transfer masuk')->first();
+                    $kategoriKeluar = $user->categories()
+                                    ->where('name', '⬆️ Transfer keluar')
+                                    ->first();
+
+                    $kategoriMasuk = $user->categories()
+                                    ->where('name', '⬇️ Transfer masuk')
+                                    ->first();
 
                     // Hitung saldo akun pengirim
                     $transaksi = Transaction::where('user_id', Auth::id());

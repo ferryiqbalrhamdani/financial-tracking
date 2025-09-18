@@ -29,7 +29,8 @@ class MoneyManagerPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->brandName('Financial Tracking')
             ->spa()
-            // ->registration()
+            ->registration()
+            ->sidebarWidth('18rem')
             ->login()
             ->colors([
                 'primary' => Color::Amber,

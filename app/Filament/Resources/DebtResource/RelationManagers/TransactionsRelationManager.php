@@ -122,8 +122,8 @@ class TransactionsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
-                    ->label('Tambah Transaksi'),
+                // Tables\Actions\CreateAction::make()
+                //     ->label('Tambah Transaksi'),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([

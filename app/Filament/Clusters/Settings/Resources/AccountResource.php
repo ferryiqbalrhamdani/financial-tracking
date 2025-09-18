@@ -77,11 +77,11 @@ class AccountResource extends Resource
                             $startingBalance = $record->starting_balance;
 
                             $pemasukan = $record->transactions
-                                ->where('tipe_Akun', 'Pemasukan')
+                                ->where('tipe_transaksi', 'Pemasukan')
                                 ->sum('amount');
 
                             $pengeluaran = $record->transactions
-                                ->where('tipe_Akun', 'Pengeluaran')
+                                ->where('tipe_transaksi', 'Pengeluaran')
                                 ->sum('amount');
 
                             $saldoAkhir = $startingBalance + ($pemasukan + $pengeluaran);
@@ -115,11 +115,11 @@ class AccountResource extends Resource
                 // Tables\Actions\DeleteAction::make(),
 
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ])
+            // ->bulkActions([
+            //     Tables\Actions\BulkActionGroup::make([
+            //         Tables\Actions\DeleteBulkAction::make(),
+            //     ]),
+            // ])
             ->groups([
                 Group::make('exclude_from_total')
                     ->getDescriptionFromRecordUsing(function ($record) {

@@ -215,79 +215,85 @@ class DebtResource extends Resource
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\Action::make('payment')
-                        ->label('Pembayaran')
-                        ->icon('heroicon-o-credit-card')
-                        ->fillForm(fn(Debt $record): array => [
-                            'accountId' => $record->account->id,
-                            'amount' => abs($record->amount),
-                            'date' => now(),
-                        ])
-                        ->form([
-                            Forms\Components\TextInput::make('amount')
-                                ->label('Jumlah Hutang/Piutang')
-                                ->mask(RawJs::make('$money($input)'))
-                                ->stripCharacters(',')
-                                ->numeric()
-                                ->placeholder('Contoh: 1,000,000')
-                                ->prefix('Rp '),
-                            Forms\Components\Select::make('accountId')
-                                ->label('Akun')
-                                ->options(Account::where('user_id', Auth::id())
-                                    ->orderBy('sort', 'asc')
-                                    ->pluck('name', 'id'))
-                                ->helperText(function ($state) {
-                                    if (!$state) return null;
+                    ->label('Pembayaran')
+                    ->icon('heroicon-o-credit-card')
+                    ->fillForm(fn(Debt $record): array => [
+                        'accountId' => $record->account->id,
+                        'amount' => abs($record->amount),
+                        'date' => now(),
+                    ])
+                    ->form([
+                        Forms\Components\TextInput::make('amount')
+                            ->label('Jumlah Hutang/Piutang')
+                            ->mask(RawJs::make('$money($input)'))
+                            ->stripCharacters(',')
+                            ->numeric()
+                            ->placeholder('Contoh: 1,000,000')
+                            ->prefix('Rp '),
 
-                                    // Ambil akun beserta total pemasukan dan pengeluaran
-                                    $account = Account::where('id', $state)
-                                        ->withSum([
-                                            'transactions as pemasukan' => fn($query) => $query->where('tipe_transaksi', 'Pemasukan'),
-                                            'transactions as pengeluaran' => fn($query) => $query->where('tipe_transaksi', 'Pengeluaran'),
-                                        ], 'amount')
-                                        ->first();
+                        Forms\Components\Select::make('accountId')
+                            ->label('Akun')
+                            ->options(Account::where('user_id', Auth::id())
+                                ->orderBy('sort', 'asc')
+                                ->pluck('name', 'id'))
+                            ->helperText(function ($state) {
+                                if (!$state) return null;
 
-                                    if (!$account) return null;
+                                $account = Account::where('id', $state)
+                                    ->withSum([
+                                        'transactions as pemasukan' => fn($q) => $q->where('tipe_transaksi', 'Pemasukan'),
+                                        'transactions as pengeluaran' => fn($q) => $q->where('tipe_transaksi', 'Pengeluaran'),
+                                    ], 'amount')
+                                    ->first();
 
-                                    $balance = $account->starting_balance + ($account->pemasukan ?? 0) + ($account->pengeluaran ?? 0);
+                                if (!$account) return null;
 
-                                    return 'Saldo: Rp ' . number_format($balance, 2, ',', '.');
-                                })
-                                ->reactive()
-                                ->required(),
-                            Forms\Components\DatePicker::make('date')
-                                ->label('Tanggal Transaksi')
-                                ->required(),
-                        ])
-                        ->action(function (array $data, Debt $record): void {
-                            // $transaction = $record->transactions->first();
-                            // dd($transaction, $data);
-                            // $record->account()->associate($data['accountId']);
-                            // $record->save();
+                                $balance = $account->starting_balance + ($account->pemasukan ?? 0) - ($account->pengeluaran ?? 0);
 
-                            $kategori =  Category::all();
-                            $dateWithTime = Carbon::parse($data['date'])
-                                ->setTimeFrom(Carbon::now()); // ambil jam, menit, detik saat ini
+                                return 'Saldo: Rp ' . number_format($balance, 2, ',', '.');
+                            })
+                            ->reactive()
+                            ->required(),
 
-                            if ($record['type'] === 'hutang') {
-                                $kategori = $kategori->where('name', 'Tagihan & utilitas')->first();
-                                $description = 'Pembayaran Hutang ke ' . $record['name'];
-                                $tipeTransaksi = 'Pengeluaran';
-                                $record['amount'] = -abs($record['amount']);
-                            } elseif ($record['type'] === 'piutang') {
-                                $kategori = $kategori->where('name', 'Transfer masuk')->first();
-                                $description = 'Penerimaan atas piutang dari ' . $record['name'];
-                                $tipeTransaksi = 'Pemasukan';
-                                $record['amount'] = abs($record['amount']);
-                            }
+                        Forms\Components\DatePicker::make('date')
+                            ->label('Tanggal Transaksi')
+                            ->required(),
+                    ])
+                    ->action(function (array $data, Debt $record): void {
+                        $user = $record->user; // pastikan relasi user() ada di model Debt
+                        $dateWithTime = Carbon::parse($data['date'])
+                            ->setTimeFrom(Carbon::now());
 
-                            // dd($data['accountId'], $record['user_id'], $kategori->id, $tipeTransaksi, $record['amount'], $description, $dateWithTime, $record['type']);
+                        $description = null;
+                        $tipeTransaksi = null;
+                        $kategori = null;
+                        $amount = (int) str_replace(['.', ','], '', $data['amount']);
 
+                        if ($record['type'] === 'hutang') {
+                            $kategori = $user->categories()
+                                ->where('name', '🧾 Tagihan & utilitas')
+                                ->first();
+
+                            $description = 'Pembayaran Hutang ke ' . $record['name'];
+                            $tipeTransaksi = 'Pengeluaran';
+                            $amount = -abs($amount);
+                        } elseif ($record['type'] === 'piutang') {
+                            $kategori = $user->categories()
+                                ->where('name', '⬇️ Transfer masuk')
+                                ->first();
+
+                            $description = 'Penerimaan atas piutang dari ' . $record['name'];
+                            $tipeTransaksi = 'Pemasukan';
+                            $amount = abs($amount);
+                        }
+
+                        if ($kategori) {
                             $record->transactions()->create([
                                 'user_id' => $record['user_id'],
                                 'account_id' => $data['accountId'],
                                 'category_id' => $kategori->id,
                                 'tipe_transaksi' => $tipeTransaksi,
-                                'amount' => $record['amount'],
+                                'amount' => $amount,
                                 'description' => $description,
                                 'date' => $dateWithTime,
                             ]);
@@ -296,7 +302,14 @@ class DebtResource extends Resource
                                 ->title('Pembayaran berhasil')
                                 ->success()
                                 ->send();
-                        }),
+                        } else {
+                            Notification::make()
+                                ->title('Kategori tidak ditemukan')
+                                ->danger()
+                                ->send();
+                        }
+                    }),
+
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
                 ])

@@ -61,7 +61,8 @@ class Budget extends Page implements HasTable
             ->description('Anggaran anda dalam periode ini.')
             ->paginated(false)
             ->deferLoading()
-            ->emptyStateHeading('Belum ada budget yang dibuat')
+            ->emptyStateHeading('Belum ada anggaran yang dibuat')
+            ->emptyStateDescription('Buat anggaran untuk memulai.')
             ->emptyStateActions([
                 Action::make('create')
                     ->label('Buat Anggaran Baru')

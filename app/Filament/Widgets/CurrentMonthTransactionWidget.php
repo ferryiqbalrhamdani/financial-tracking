@@ -21,7 +21,7 @@ class CurrentMonthTransactionWidget extends BaseWidget
 {
     protected int | string | array $columnSpan = 'full';
 
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 5;
     public function table(Table $table): Table
     {
         $dayStart = Localization::where('user_id', Auth::id())->value('monthly_period_start_day') ?? 1;
