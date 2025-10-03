@@ -52,10 +52,11 @@ class TransactionOverview extends BaseWidget
             ->whereHas('account', function ($query) {
                 $query->where('exclude_from_total', false);
             })
+            
             ->get();
 
-        $totalIn = $transactions->where('tipe_transaksi', 'Pemasukan')->sum('amount');
-        $totalEx = $transactions->where('tipe_transaksi', 'Pengeluaran')->sum('amount');
+        $totalIn = $transactions->where('tipe_transaksi', 'Pemasukan')->where('ex_report', false)->sum('amount');
+        $totalEx = $transactions->where('tipe_transaksi', 'Pengeluaran')->where('ex_report', false)->sum('amount');
         $totalAccountBalance = $accounts->sum('starting_balance');
         $totalInData = $transactionsData->where('tipe_transaksi', 'Pemasukan')->sum('amount');
         $totalExData = $transactionsData->where('tipe_transaksi', 'Pengeluaran')->sum('amount');
@@ -114,11 +115,13 @@ class TransactionOverview extends BaseWidget
 
             $income = Transaction::where('user_id', $userId)
                 ->where('tipe_transaksi', 'Pemasukan')
+                ->where('ex_report', false) 
                 ->whereBetween('date', [$startOfMonth, $endOfMonth])
                 ->sum('amount');
 
             $expense = Transaction::where('user_id', $userId)
                 ->where('tipe_transaksi', 'Pengeluaran')
+                ->where('ex_report', false) 
                 ->whereBetween('date', [$startOfMonth, $endOfMonth])
                 ->sum('amount');
 

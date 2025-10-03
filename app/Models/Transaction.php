@@ -18,6 +18,7 @@ class Transaction extends Model
         'debt_id',
         'bill_id',
         'subscription_id',
+        'ex_report',
     ];
 
     public function user()

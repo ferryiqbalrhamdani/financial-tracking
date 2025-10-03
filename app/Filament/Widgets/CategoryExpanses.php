@@ -40,7 +40,8 @@ class CategoryExpanses extends BaseWidget
                 ->where('user_id', Auth::id())
                 ->where('tipe_transaksi', 'Pengeluaran')
                 ->withSum(['transactions as pengeluaran' => function ($query) use ($startDate, $endDate) {
-                    $query->whereBetween('date', [$startDate, $endDate]);
+                    $query->whereBetween('date', [$startDate, $endDate])
+                        ->where('ex_report', false);
                 }], 'amount')
         )
         ->heading('Pengeluaran ' . $startDate->format('d M') . ' – ' . $endDate->format('d M'))

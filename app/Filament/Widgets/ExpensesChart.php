@@ -44,6 +44,7 @@ class ExpensesChart extends ChartWidget
             $rows = Transaction::selectRaw('EXTRACT(HOUR FROM "date") as period, SUM(amount) as total')
                 ->where('user_id', $userId)
                 ->where('tipe_transaksi', 'Pengeluaran')
+                ->where('ex_report', false) // hanya ambil yang ex_report = false
                 ->whereBetween('date', [$start, $end])
                 ->groupBy(DB::raw('EXTRACT(HOUR FROM "date")'))
                 ->pluck('total', 'period');
@@ -60,6 +61,7 @@ class ExpensesChart extends ChartWidget
                 ->where('user_id', $userId)
                 ->where('tipe_transaksi', 'Pengeluaran')
                 ->whereBetween('date', [$start, $end])
+                 ->where('ex_report', false) // filter ex_report
                 ->groupBy(DB::raw('CAST("date" AS DATE)'))
                 ->pluck('total', 'period');
 
@@ -75,6 +77,7 @@ class ExpensesChart extends ChartWidget
             $rows = Transaction::selectRaw('EXTRACT(MONTH FROM "date") as period, SUM(amount) as total')
                 ->where('user_id', $userId)
                 ->where('tipe_transaksi', 'Pengeluaran')
+                 ->where('ex_report', false) // filter ex_report
                 ->whereYear('date', $year)
                 ->groupBy(DB::raw('EXTRACT(MONTH FROM "date")'))
                 ->pluck('total', 'period');

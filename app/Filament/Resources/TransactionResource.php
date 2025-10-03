@@ -73,7 +73,7 @@ class TransactionResource extends Resource
                             ->where('user_id', Auth::user()->id)
                             ->pluck('name', 'id');
                     })
-                    ->searchable()
+                    // ->searchable()
                     ->reactive()
                     ->disabled(fn(callable $get) => empty($get('tipe_transaksi')))
                     ->placeholder('Pilih kategori'),
@@ -107,7 +107,7 @@ class TransactionResource extends Resource
                 Forms\Components\DatePicker::make('date')
                     ->label('Tanggal Transaksi')
                     ->default(Carbon::now())
-                    ->native(false)
+                    // ->native(false)
                     ->required()
                     ->closeOnDateSelection()
                     ->reactive()
@@ -137,6 +137,27 @@ class TransactionResource extends Resource
                     ->label('Deskripsi')
                     ->columnSpanFull()
                     ->rows(5),
+                Forms\Components\Section::make('')
+                    ->description('Tambahkan lebih banyak detail')
+                    ->collapsed(true)
+                    ->schema([
+                         Forms\Components\Select::make('event_id')
+                            ->label('Acara')
+                            ->placeholder('Pilih acara')
+                            ->searchable()
+                            ->preload()
+                            ->options([
+                                'trip to bogor' => '🏝️ Trip to Bogor',
+                                'trip to lampung' => '🏝️ Trip to Lampung',
+                            ])
+                            ->helperText('Coming soon!'),
+                        Forms\Components\Toggle::make('ex_report')
+                            ->label('Pisahkan dari laporan')
+                            ->onColor('success')
+                            ->inline()
+                            ->inlineLabel(false)
+                            ->helperText('Jangan sertakan transaksi ini di laporan misalnya Tinjauan.')
+                    ]),
             ]);
     }
 

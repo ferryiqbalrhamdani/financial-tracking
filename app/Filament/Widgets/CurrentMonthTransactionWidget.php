@@ -56,7 +56,7 @@ class CurrentMonthTransactionWidget extends BaseWidget
                         $startDate->startOfDay(),
                         $endDate->endOfDay()
                     ])
-                    ->where('is_transfer', false)
+                    // ->where('is_transfer', false)
                     ->orderBy('date', 'desc')
 
             )
@@ -110,7 +110,7 @@ class CurrentMonthTransactionWidget extends BaseWidget
             ])
             ->deferLoading()
             ->heading('Periode ' . $startDate->format('d M') . ' – ' . $endDate->format('d M'))
-            ->description('Transaksi anda dalam periode ini, transfer tidak ditampilkan.')
+            // ->description('Transaksi anda dalam periode ini, transfer tidak ditampilkan.')
             ->paginated(false)
             ->groups([
                 Tables\Grouping\Group::make('date')

@@ -44,6 +44,7 @@ class IncomeChart extends ChartWidget
             $rows = Transaction::selectRaw('EXTRACT(HOUR FROM "date") as period, SUM(amount) as total')
                 ->where('user_id', $userId)
                 ->where('tipe_transaksi', 'Pemasukan')
+                ->where('ex_report', false)
                 ->whereBetween('date', [$start, $end])
                 ->groupBy(DB::raw('EXTRACT(HOUR FROM "date")'))
                 ->pluck('total', 'period');
@@ -59,6 +60,7 @@ class IncomeChart extends ChartWidget
             $rows = Transaction::selectRaw('CAST("date" AS DATE) as period, SUM(amount) as total')
                 ->where('user_id', $userId)
                 ->where('tipe_transaksi', 'Pemasukan')
+                ->where('ex_report', false)
                 ->whereBetween('date', [$start, $end])
                 ->groupBy(DB::raw('CAST("date" AS DATE)'))
                 ->pluck('total', 'period');
@@ -74,6 +76,7 @@ class IncomeChart extends ChartWidget
             $rows = Transaction::selectRaw('EXTRACT(MONTH FROM "date") as period, SUM(amount) as total')
                 ->where('user_id', $userId)
                 ->where('tipe_transaksi', 'Pemasukan')
+                ->where('ex_report', false)
                 ->whereYear('date', $year)
                 ->groupBy(DB::raw('EXTRACT(MONTH FROM "date")'))
                 ->pluck('total', 'period');

@@ -12,9 +12,12 @@ use Filament\Support\RawJs;
 use Filament\Actions\StaticAction;
 use Filament\Forms\Components\Grid;
 use Illuminate\Contracts\View\View;
+use Filament\Forms\Components\Radio;
 use Filament\Support\Enums\MaxWidth;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Section;
 use Filament\Resources\Components\Tab;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -132,19 +135,28 @@ class ManageTransactions extends ManageRecords
                         ->numeric()
                         ->columnSpanFull()
                         ->required(),
-
-                    DatePicker::make('date')
-                        ->label('Tanggal Transaksi')
-                        ->default(Carbon::now())
-                        ->required()
-                        ->displayFormat('d/m/Y')
-                        ->closeOnDateSelection()
-                        ->reactive()
-                        ->afterStateHydrated(
-                            fn($component, $state) =>
-                            $component->state(Carbon::parse($state)->toDateString())
-                        )
-                        ->dehydrateStateUsing(fn($state) => Carbon::parse($state)->toDateString()),
+                        DatePicker::make('date')
+                            ->label('Tanggal Transaksi')
+                            ->default(Carbon::now())
+                            ->required()
+                            ->displayFormat('d/m/Y')
+                            ->closeOnDateSelection()
+                            ->reactive()
+                            ->afterStateHydrated(
+                                fn($component, $state) =>
+                                $component->state(Carbon::parse($state)->toDateString())
+                            )
+                            ->dehydrateStateUsing(fn($state) => Carbon::parse($state)->toDateString()),
+    
+                    Section::make('')
+                        ->schema([
+                            Toggle::make('ex_report')
+                                ->label('Pisahkan dari laporan')
+                                ->onColor('success')
+                                ->default(true)
+                                ->inline()
+                                ->helperText('Transaksi ini akan dikeluarkan dari laporan di kedua akun')
+                        ]),
 
                 ])
                 ->action(function (array $data) {
@@ -207,6 +219,7 @@ class ManageTransactions extends ManageRecords
                             'date' => $dateWithTime,
                             'is_transfer' => true,
                             'description' => 'Kirim ke ' . $accountRecived->name,
+                            'ex_report' => $data['ex_report'] ?? false,
                         ]);
 
                         sleep(1); // jeda 1 detik
@@ -223,6 +236,7 @@ class ManageTransactions extends ManageRecords
                             'date' => $dateWithTime,
                             'is_transfer' => true,
                             'description' => 'Diterima dari ' . $accountSend->name,
+                            'ex_report' => $data['ex_report'] ?? false,
                         ]);
 
 

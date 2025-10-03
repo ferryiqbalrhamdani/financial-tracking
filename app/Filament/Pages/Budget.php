@@ -83,6 +83,7 @@ class Budget extends Page implements HasTable
                                     $startDate->startOfDay(),
                                     $endDate->endOfDay()
                                 ])
+                                ->where('ex_report', false) // hanya transaksi ex_report = false
                                 ->sum('amount') ?? 0
                         );
 
@@ -120,6 +121,7 @@ class Budget extends Page implements HasTable
                                 $startDate->startOfDay(),
                                 $endDate->endOfDay()
                             ])
+                            ->where('ex_report', false) // tambahkan filter disini juga
                             ->sum('amount') ?? 0
                     )
                     // ->summarize([
@@ -134,6 +136,7 @@ class Budget extends Page implements HasTable
                                 $startDate->startOfDay(),
                                 $endDate->endOfDay()
                             ])
+                            ->where('ex_report', false) // tambahkan filter disini juga
                             ->sum('amount') ?? 0,
                         2,
                         ',',
