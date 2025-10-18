@@ -142,14 +142,11 @@ class TransactionResource extends Resource
                     ->collapsed(true)
                     ->schema([
                          Forms\Components\Select::make('event_id')
+                            ->relationship(name: 'event', titleAttribute: 'title')
                             ->label('Acara')
                             ->placeholder('Pilih acara')
                             ->searchable()
                             ->preload()
-                            ->options([
-                                'trip to bogor' => '🏝️ Trip to Bogor',
-                                'trip to lampung' => '🏝️ Trip to Lampung',
-                            ])
                             ->helperText('Coming soon!'),
                         Forms\Components\Toggle::make('ex_report')
                             ->label('Pisahkan dari laporan')
