@@ -306,11 +306,11 @@ class TransactionResource extends Resource
 
 
             ], 
-            layout: FiltersLayout::Modal
+            // layout: FiltersLayout::Modal
             )
             ->deferLoading()
             // ->filtersFormColumns(3)
-            ->filtersFormWidth(MaxWidth::TwoExtraLarge)
+            // ->filtersFormWidth(MaxWidth::TwoExtraLarge)
             ->defaultSort('date', 'desc')
             ->actions([
                 Tables\Actions\ActionGroup::make([
