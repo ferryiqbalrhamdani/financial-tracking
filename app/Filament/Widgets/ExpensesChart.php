@@ -14,7 +14,7 @@ class ExpensesChart extends ChartWidget
     protected static ?string $heading = 'Grafik Pengeluaran';
     protected static ?string $maxHeight = '300px';
     protected static string $color = 'danger';
-    public ?string $filter = 'year'; // Default filter set to 'year'
+    public ?string $filter = 'year';
 
     protected static ?int $sort = 3;
 
@@ -39,53 +39,49 @@ class ExpensesChart extends ChartWidget
         $labels = [];
         $values = [];
 
+        $baseQuery = Transaction::where('user_id', $userId)
+            ->where('tipe_transaksi', 'Pengeluaran')
+            ->whereBetween('date', [$start, $end])
+            ->whereHas('account', function ($q) {
+                $q->where('exclude_from_total', false);
+            });
+
         if ($activeFilter === 'today') {
-            // per jam: 0..23
-            $rows = Transaction::selectRaw('EXTRACT(HOUR FROM "date") as period, SUM(amount) as total')
-                ->where('user_id', $userId)
-                ->where('tipe_transaksi', 'Pengeluaran')
-                ->where('ex_report', false) // hanya ambil yang ex_report = false
-                ->whereBetween('date', [$start, $end])
+
+            $rows = $baseQuery
+                ->selectRaw('EXTRACT(HOUR FROM "date") as period, SUM(amount) as total')
                 ->groupBy(DB::raw('EXTRACT(HOUR FROM "date")'))
                 ->pluck('total', 'period');
 
             for ($h = 0; $h <= 23; $h++) {
                 $labels[] = sprintf('%02d:00', $h);
-                $val = isset($rows[$h]) ? (float) $rows[$h] : 0;
-                $values[] = abs($val);
+                $values[] = abs((float) ($rows[$h] ?? 0));
             }
+
         } elseif ($activeFilter === 'week' || $activeFilter === 'month') {
-            // per hari between start..end
+
             $period = CarbonPeriod::create($start->startOfDay(), $end->startOfDay());
-            $rows = Transaction::selectRaw('CAST("date" AS DATE) as period, SUM(amount) as total')
-                ->where('user_id', $userId)
-                ->where('tipe_transaksi', 'Pengeluaran')
-                ->whereBetween('date', [$start, $end])
-                 ->where('ex_report', false) // filter ex_report
+            $rows = $baseQuery
+                ->selectRaw('CAST("date" AS DATE) as period, SUM(amount) as total')
                 ->groupBy(DB::raw('CAST("date" AS DATE)'))
                 ->pluck('total', 'period');
 
             foreach ($period as $day) {
-                $key = $day->toDateString(); // 'YYYY-MM-DD'
-                $labels[] = $day->format('d M'); // e.g. 12 Sep
-                $val = isset($rows[$key]) ? (float) $rows[$key] : 0;
-                $values[] = abs($val);
+                $key = $day->toDateString();
+                $labels[] = $day->format('d M');
+                $values[] = abs((float) ($rows[$key] ?? 0));
             }
+
         } else { // year
-            // per bulan (1..12)
-            $year = $start->year;
-            $rows = Transaction::selectRaw('EXTRACT(MONTH FROM "date") as period, SUM(amount) as total')
-                ->where('user_id', $userId)
-                ->where('tipe_transaksi', 'Pengeluaran')
-                 ->where('ex_report', false) // filter ex_report
-                ->whereYear('date', $year)
+
+            $rows = $baseQuery
+                ->selectRaw('EXTRACT(MONTH FROM "date") as period, SUM(amount) as total')
                 ->groupBy(DB::raw('EXTRACT(MONTH FROM "date")'))
                 ->pluck('total', 'period');
 
             for ($m = 1; $m <= 12; $m++) {
-                $labels[] = Carbon::create($year, $m, 1)->format('M'); // Jan, Feb, ...
-                $val = isset($rows[$m]) ? (float) $rows[$m] : 0;
-                $values[] = abs($val);
+                $labels[] = Carbon::create($start->year, $m, 1)->format('M');
+                $values[] = abs((float) ($rows[$m] ?? 0));
             }
         }
 
@@ -93,7 +89,7 @@ class ExpensesChart extends ChartWidget
             'datasets' => [
                 [
                     'label' => 'Total Pengeluaran',
-                    'data' => $values, // numeric (positive)
+                    'data' => $values,
                     'fill' => true,
                     'tension' => 0.3,
                     'borderColor' => '#ef4444',
@@ -106,40 +102,24 @@ class ExpensesChart extends ChartWidget
 
     protected function getDateRangeByFilter(string $filter): array
     {
-        switch ($filter) {
-            case 'today':
-                return [
-                    'start' => now()->startOfDay(),
-                    'end' => now()->endOfDay(),
-                ];
-            case 'week':
-                return [
-                    'start' => now()->startOfWeek(),
-                    'end' => now()->endOfWeek(),
-                ];
-            case 'month':
-                return [
-                    'start' => now()->startOfMonth(),
-                    'end' => now()->endOfMonth(),
-                ];
-            case 'year':
-            default:
-                return [
-                    'start' => now()->startOfYear(),
-                    'end' => now()->endOfYear(),
-                ];
-        }
-    }
-
-    protected function formatLabel(string $date, string $filter): string
-    {
-        if ($filter === 'year') {
-            return Carbon::parse($date)->format('M'); // bulan
-        } elseif ($filter === 'today') {
-            return Carbon::parse($date)->format('H:i'); // jam
-        }
-
-        return Carbon::parse($date)->format('d M'); // tanggal
+        return match ($filter) {
+            'today' => [
+                'start' => now()->startOfDay(),
+                'end' => now()->endOfDay(),
+            ],
+            'week' => [
+                'start' => now()->startOfWeek(),
+                'end' => now()->endOfWeek(),
+            ],
+            'month' => [
+                'start' => now()->startOfMonth(),
+                'end' => now()->endOfMonth(),
+            ],
+            default => [
+                'start' => now()->startOfYear(),
+                'end' => now()->endOfYear(),
+            ],
+        };
     }
 
     protected function getType(): string

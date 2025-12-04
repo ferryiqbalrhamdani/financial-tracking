@@ -13,10 +13,9 @@ class IncomeChart extends ChartWidget
 {
     protected static ?string $heading = 'Grafik Pemasukan';
     protected static ?string $maxHeight = '300px';
-    protected static string $color = 'success'; // hijau untuk pemasukan
-    public ?string $filter = 'year'; // Default filter set to 'year'
-
-    protected static ?int $sort = 4; // tampil setelah ExpensesChart
+    protected static string $color = 'success';
+    public ?string $filter = 'year';
+    protected static ?int $sort = 4;
 
     protected function getFilters(): ?array
     {
@@ -39,52 +38,50 @@ class IncomeChart extends ChartWidget
         $labels = [];
         $values = [];
 
+        // Filter exclude akun yang exclude_from_total = true
+        $baseQuery = Transaction::where('user_id', $userId)
+            ->where('tipe_transaksi', 'Pemasukan')
+            ->whereBetween('date', [$start, $end])
+            ->whereHas('account', function ($q) {
+                $q->where('exclude_from_total', false);
+            });
+
         if ($activeFilter === 'today') {
-            // per jam: 0..23
-            $rows = Transaction::selectRaw('EXTRACT(HOUR FROM "date") as period, SUM(amount) as total')
-                ->where('user_id', $userId)
-                ->where('tipe_transaksi', 'Pemasukan')
-                ->where('ex_report', false)
-                ->whereBetween('date', [$start, $end])
+            $rows = $baseQuery
+                ->selectRaw('EXTRACT(HOUR FROM "date") as period, SUM(amount) as total')
                 ->groupBy(DB::raw('EXTRACT(HOUR FROM "date")'))
                 ->pluck('total', 'period');
 
             for ($h = 0; $h <= 23; $h++) {
                 $labels[] = sprintf('%02d:00', $h);
-                $val = isset($rows[$h]) ? (float) $rows[$h] : 0;
-                $values[] = $val;
+                $values[] = (float) ($rows[$h] ?? 0);
             }
+
         } elseif ($activeFilter === 'week' || $activeFilter === 'month') {
-            // per hari
+
             $period = CarbonPeriod::create($start->startOfDay(), $end->startOfDay());
-            $rows = Transaction::selectRaw('CAST("date" AS DATE) as period, SUM(amount) as total')
-                ->where('user_id', $userId)
-                ->where('tipe_transaksi', 'Pemasukan')
-                ->where('ex_report', false)
-                ->whereBetween('date', [$start, $end])
+
+            $rows = $baseQuery
+                ->selectRaw('CAST("date" AS DATE) as period, SUM(amount) as total')
                 ->groupBy(DB::raw('CAST("date" AS DATE)'))
                 ->pluck('total', 'period');
 
             foreach ($period as $day) {
                 $key = $day->toDateString();
                 $labels[] = $day->format('d M');
-                $val = isset($rows[$key]) ? (float) $rows[$key] : 0;
-                $values[] = $val;
+                $values[] = (float) ($rows[$key] ?? 0);
             }
+
         } else { // year
-            $year = $start->year;
-            $rows = Transaction::selectRaw('EXTRACT(MONTH FROM "date") as period, SUM(amount) as total')
-                ->where('user_id', $userId)
-                ->where('tipe_transaksi', 'Pemasukan')
-                ->where('ex_report', false)
-                ->whereYear('date', $year)
+
+            $rows = $baseQuery
+                ->selectRaw('EXTRACT(MONTH FROM "date") as period, SUM(amount) as total')
                 ->groupBy(DB::raw('EXTRACT(MONTH FROM "date")'))
                 ->pluck('total', 'period');
 
             for ($m = 1; $m <= 12; $m++) {
-                $labels[] = Carbon::create($year, $m, 1)->format('M');
-                $val = isset($rows[$m]) ? (float) $rows[$m] : 0;
-                $values[] = $val;
+                $labels[] = Carbon::create($start->year, $m, 1)->format('M');
+                $values[] = (float) ($rows[$m] ?? 0);
             }
         }
 
@@ -95,8 +92,8 @@ class IncomeChart extends ChartWidget
                     'data' => $values,
                     'fill' => true,
                     'tension' => 0.3,
-                    'borderColor' => '#22c55e', // hijau
-                    'backgroundColor' => 'rgba(34, 197, 94, 0.2)', // hijau transparan
+                    'borderColor' => '#22c55e',
+                    'backgroundColor' => 'rgba(34, 197, 94, 0.2)',
                 ],
             ],
             'labels' => $labels,
@@ -105,40 +102,24 @@ class IncomeChart extends ChartWidget
 
     protected function getDateRangeByFilter(string $filter): array
     {
-        switch ($filter) {
-            case 'today':
-                return [
-                    'start' => now()->startOfDay(),
-                    'end' => now()->endOfDay(),
-                ];
-            case 'week':
-                return [
-                    'start' => now()->startOfWeek(),
-                    'end' => now()->endOfWeek(),
-                ];
-            case 'month':
-                return [
-                    'start' => now()->startOfMonth(),
-                    'end' => now()->endOfMonth(),
-                ];
-            case 'year':
-            default:
-                return [
-                    'start' => now()->startOfYear(),
-                    'end' => now()->endOfYear(),
-                ];
-        }
-    }
-
-    protected function formatLabel(string $date, string $filter): string
-    {
-        if ($filter === 'year') {
-            return Carbon::parse($date)->format('M');
-        } elseif ($filter === 'today') {
-            return Carbon::parse($date)->format('H:i');
-        }
-
-        return Carbon::parse($date)->format('d M');
+        return match ($filter) {
+            'today' => [
+                'start' => now()->startOfDay(),
+                'end' => now()->endOfDay(),
+            ],
+            'week' => [
+                'start' => now()->startOfWeek(),
+                'end' => now()->endOfWeek(),
+            ],
+            'month' => [
+                'start' => now()->startOfMonth(),
+                'end' => now()->endOfMonth(),
+            ],
+            default => [
+                'start' => now()->startOfYear(),
+                'end' => now()->endOfYear(),
+            ],
+        };
     }
 
     protected function getType(): string
